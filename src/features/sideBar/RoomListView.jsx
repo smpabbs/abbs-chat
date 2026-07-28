@@ -41,14 +41,13 @@ function RoomListView() {
       
       if (classes && classes.length > 0) setClassData(classes[0]);
 
-      // Get rooms
-      const { data: roomData } = await supabase
-        .from("rooms")
-        .select("*")
-        .eq("class_id", classId)
-        .order("name");
+      // Get user's rooms via room_members
+      const { data: myRooms } = await supabase
+        .from("room_members")
+        .select("room:room_id(id, name)")
+        .eq("user_id", user.id);
 
-      if (roomData) setRooms(roomData);
+      if (myRooms) setRooms(myRooms.map(m => m.room));
 
       // Get all members
       const { data: memberData } = await supabase
