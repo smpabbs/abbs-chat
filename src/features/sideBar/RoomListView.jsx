@@ -41,13 +41,21 @@ function RoomListView() {
       
       if (classes && classes.length > 0) setClassData(classes[0]);
 
-      // Get user's rooms via room_members
+      // Get user's rooms via room_members with class info
       const { data: myRooms } = await supabase
         .from("room_members")
-        .select("room:room_id(id, name)")
+        .select("room:room_id(id, name, class:class_id(name, unit_name))")
         .eq("user_id", user.id);
 
-      if (myRooms) setRooms(myRooms.map(m => m.room));
+      if (myRooms) {
+        const mapped = myRooms.map(m => ({
+          id: m.room.id,
+          name: m.room.name,
+          class_name: m.room.class?.name || "",
+          unit_name: m.room.class?.unit_name || "",
+        }));
+        setRooms(mapped);
+      }
 
       // Get all members
       const { data: memberData } = await supabase
@@ -120,8 +128,10 @@ function RoomListView() {
               {getRoomIcon(room.name)}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm">{room.name}</p>
-              <p className="text-xs text-gray-500 truncate">{room.name === "General" ? "Diskusi bebas kelas" : `Diskusi ${room.name}`}</p>
+              <p className="font-medium text-sm">{room.class_name ? `${room.class_name}` : ""} {room.name}</p>
+              <p className="text-xs text-gray-500 truncate">
+                {room.class_name ? `${room.unit_name}` : room.name === "General" ? "Diskusi bebas kelas" : `Diskusi ${room.name}`}
+              </p>
             </div>
           </button>
         ))}
