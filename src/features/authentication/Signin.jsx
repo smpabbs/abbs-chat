@@ -119,7 +119,7 @@ function Signin() {
         </SubmitBtn>
 
         <p>
-          Don't have an account? <TextLink to="/signup">Sign up</TextLink>
+          Aplikasi Chat Pembelajaran SMP ABBS
         </p>
       </FormContainer>
     </MainContainer>

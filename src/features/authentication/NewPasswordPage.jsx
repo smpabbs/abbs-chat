@@ -1,127 +1,67 @@
-import Loader from "../../components/Loader";
-import { useUpdateUser } from "../userProfile/useUpdateUser";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import supabase from "../../services/supabase";
 import FormContainer from "../../components/FormContainer";
 import SubmitBtn from "../../components/SubmitBtn";
 import MainContainer from "../../components/MainContainer";
 import InputBox from "../../components/InputBox";
 import Heading from "../../components/Heading";
-import { Controller, useForm } from "react-hook-form";
 import { MIN_PASSWORD_LENGTH } from "../../config";
-import ResetLinkExpired from "../../components/ResetLinkExpired";
-import useCheckRecovery from "./useCheckRecovery";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
 import LogoLarge from "../../components/LogoLarge";
 
-function ResetPassword() {
+function NewPasswordPage() {
   const navigate = useNavigate();
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-    trigger,
-    getValues,
-  } = useForm({
-    defaultValues: {
-      newPassword: "",
-      confirmPassword: "",
-    },
-  });
+  const [loading, setLoading] = useState(false);
+  const [validSession, setValidSession] = useState(false);
+  const [checking, setChecking] = useState(true);
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [error, setError] = useState("");
 
-  const { updateUser, isUpdating } = useUpdateUser();
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setValidSession(!!data.session);
+      setChecking(false);
+    });
+  }, []);
 
-  const { isRecovery, isLoading } = useCheckRecovery();
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (password !== confirm) { setError("Password tidak sama"); return; }
+    if (password.length < MIN_PASSWORD_LENGTH) { setError("Minimal " + MIN_PASSWORD_LENGTH + " karakter"); return; }
+    setLoading(true);
+    setError("");
+    const { error: err } = await supabase.auth.updateUser({ password });
+    if (err) setError(err.message);
+    else { toast.success("Password berhasil diupdate!"); navigate("/signin"); }
+    setLoading(false);
+  }
 
-  const onSubmit = ({ newPassword, confirmPassword }) => {
-    if (!newPassword || !confirmPassword) return;
+  if (checking) return <MainContainer><div className="flex items-center justify-center p-8"><p className="text-gray-500">Loading...</p></div></MainContainer>;
 
-    updateUser(
-      { password: newPassword },
-      {
-        onSuccess: () => {
-          toast.dismiss();
-          toast.success("Password updated successfully!");
-          navigate("/chat");
-        },
-      },
-    );
-  };
-
-  if (isLoading)
+  if (!validSession) {
     return (
       <MainContainer>
-        <Loader size="large" text="Loading" />
+        <div className="flex flex-col items-center justify-center p-8">
+          <p className="text-3xl mb-2">🔗</p>
+          <p className="text-gray-500">Link reset password sudah kadaluarsa atau tidak valid.</p>
+          <a href="/reset-password" className="mt-4 text-blue-500">Kirim ulang reset password</a>
+        </div>
       </MainContainer>
     );
-
-  if (!isRecovery && !isLoading) return <ResetLinkExpired />;
+  }
 
   return (
     <MainContainer>
       <LogoLarge />
-
-      <FormContainer onSubmit={handleSubmit(onSubmit)}>
-        <Heading>Set new password</Heading>
-
-        <Controller
-          name="newPassword"
-          control={control}
-          rules={{
-            required: "Enter a password.",
-            minLength: {
-              value: MIN_PASSWORD_LENGTH,
-              message: `Weak password. Minimum ${MIN_PASSWORD_LENGTH} characters required.`,
-            },
-          }}
-          render={({ field }) => (
-            <InputBox
-              type="password"
-              value={field.value}
-              onChange={field.onChange}
-              onBlur={() => trigger("newPassword")}
-              placeholder="New password"
-              htmlFor="newPassword"
-              error={errors.newPassword?.message}
-              disabled={isUpdating}
-            />
-          )}
-        />
-
-        <Controller
-          name="confirmPassword"
-          control={control}
-          rules={{
-            required: "Confirm your password.",
-            validate: (value) =>
-              value === getValues().newPassword || "Passwords don't match!",
-          }}
-          render={({ field }) => (
-            <InputBox
-              type="password"
-              value={field.value}
-              onChange={field.onChange}
-              onBlur={() => trigger("confirmPassword")}
-              placeholder="Confirm password"
-              htmlFor="confirmPassword"
-              error={errors.confirmPassword?.message}
-              disabled={isUpdating}
-            />
-          )}
-        />
-
-        <SubmitBtn disabled={isUpdating}>
-          {isUpdating ? (
-            <>
-              <Loader size="small" />
-              <span className="ml-2">Updating...</span>
-            </>
-          ) : (
-            <span>Update</span>
-          )}
-        </SubmitBtn>
+      <FormContainer onSubmit={handleSubmit}>
+        <Heading>Buat password baru</Heading>
+        <InputBox type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password baru" htmlFor="newPassword" error={error} disabled={loading} />
+        <InputBox type="password" value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Konfirmasi password" htmlFor="confirmPassword" disabled={loading} />
+        <SubmitBtn disabled={loading}>{loading ? "Menyimpan..." : "Simpan"}</SubmitBtn>
       </FormContainer>
     </MainContainer>
   );
 }
-
-export default ResetPassword;
+export default NewPasswordPage;

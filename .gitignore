@@ -25,4 +25,4 @@ dist-ssr
 
 # Custom
 _test_
-.env
+.env.env

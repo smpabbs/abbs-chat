@@ -1,101 +1,53 @@
-import Loader from "../../components/Loader";
-import useResetPasswordForEmail from "./useResetPasswordForEmail";
-import { RiArrowLeftSLine } from "react-icons/ri";
+import { useState } from "react";
+import supabase from "../../services/supabase";
 import Heading from "../../components/Heading";
 import MainContainer from "../../components/MainContainer";
 import FormContainer from "../../components/FormContainer";
 import InputBox from "../../components/InputBox";
 import SubmitBtn from "../../components/SubmitBtn";
 import TextLink from "../../components/TextLink";
-import { Controller, useForm } from "react-hook-form";
-import { EMAIL_REGEX } from "../../config";
-import RecoveryEmailSent from "../../components/RecoveryEmailSent";
 import LogoLarge from "../../components/LogoLarge";
 
 function ResetPasswordPage() {
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-    trigger,
-  } = useForm({
-    defaultValues: {
-      email: "",
-    },
-  });
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const {
-    resetPassword,
-    isPending: isResetting,
-    isSuccess,
-  } = useResetPasswordForEmail();
-
-  function onSubmit({ email }) {
-    resetPassword(email);
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!email) return;
+    setLoading(true);
+    setError("");
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + "/new-password",
+    });
+    if (err) setError(err.message);
+    else setSent(true);
+    setLoading(false);
   }
 
   return (
     <MainContainer>
       <LogoLarge />
-
-      <FormContainer onSubmit={handleSubmit(onSubmit)}>
-        {isSuccess ? (
-          <RecoveryEmailSent />
+      <FormContainer onSubmit={handleSubmit}>
+        {sent ? (
+          <div className="text-center">
+            <Heading>Cek email kamu</Heading>
+            <p className="text-sm text-gray-500 mt-2">Link reset password sudah dikirim ke {email}</p>
+            <TextLink to="/signin" addClass="mt-4 block">Kembali ke Sign in</TextLink>
+          </div>
         ) : (
           <>
-            <Heading>Reset your password</Heading>
-            <p className="mb-4 text-center text-sm">
-              Enter your email below and we'll send you a recovery link to reset
-              your password.
-            </p>
-
-            <Controller
-              name="email"
-              control={control}
-              rules={{
-                required: "Enter your email.",
-                pattern: {
-                  value: EMAIL_REGEX,
-                  message: "Invalid email. Please enter a valid email.",
-                },
-              }}
-              render={({ field }) => (
-                <InputBox
-                  type="email"
-                  value={field.value}
-                  onChange={field.onChange}
-                  onBlur={() => trigger("email")}
-                  placeholder="Email"
-                  htmlFor="email"
-                  error={errors.email?.message}
-                  disabled={isResetting}
-                />
-              )}
-            />
-
-            <SubmitBtn isPending={isResetting} disabled={isResetting}>
-              {isResetting ? (
-                <>
-                  <Loader size="small" />
-                  <span className="ml-2">Sending...</span>
-                </>
-              ) : (
-                <span className="">Send</span>
-              )}
-            </SubmitBtn>
-
-            <TextLink
-              to="/signin"
-              addClass="flex items-center justify-center self-center"
-            >
-              <RiArrowLeftSLine />
-              Back to Sign in
-            </TextLink>
+            <Heading>Reset password</Heading>
+            <p className="mb-4 text-center text-sm text-gray-500">Masukkan email untuk reset password</p>
+            <InputBox type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" htmlFor="email" error={error} disabled={loading} />
+            <SubmitBtn disabled={loading}>{loading ? "Mengirim..." : "Kirim"}</SubmitBtn>
+            <TextLink to="/signin" addClass="mt-3 text-center block">Kembali ke Sign in</TextLink>
           </>
         )}
       </FormContainer>
     </MainContainer>
   );
 }
-
 export default ResetPasswordPage;
