@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { HashRouter, Route, Routes, Navigate } from "react-router-dom";
 import "./styles/index.css";
 import AppLayout from "./components/AppLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -19,7 +19,7 @@ function App() {
     <UiProvider>
       <QueryClientProvider client={queryClient}>
         <Toaster position="top-center" toastOptions={{ error: { duration: 5000 }, style: { maxWidth: "500px" } }} />
-        <BrowserRouter>
+        <HashRouter>
           <Routes>
             <Route path="/" element={<Navigate to="/chat" replace />} />
             <Route path="/chat" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
@@ -31,7 +31,7 @@ function App() {
             <Route path="reset-password" element={<ResetPasswordPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
+        </HashRouter>
       </QueryClientProvider>
     </UiProvider>
   );
