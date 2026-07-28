@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import supabase from "../../services/supabase";
-import { useUser } from "../authentication/useUser";
+import { useUser } from "../../components/ProtectedRoute";
 import { useUi } from "../../contexts/UiContext";
 
 function ChatView() {

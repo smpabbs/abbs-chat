@@ -1,34 +1,40 @@
-import { useEffect } from "react";
-import { useUser } from "../features/authentication/useUser";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Loader from "./Loader";
+import supabase from "../services/supabase";
 import MainContainer from "./MainContainer";
 
 function ProtectedRoute({ children }) {
   const navigate = useNavigate();
+  const [checking, setChecking] = useState(true);
+  const [user, setUser] = useState(null);
 
-  //1. Load the authenticated user
-  const { isLoading, isAuthenticated } = useUser();
-
-  //2. if there isno authenticated user, redirect to the signin page
-  useEffect(
-    function () {
-      if (!isAuthenticated && !isLoading)
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data?.session) {
         navigate("/signin", { replace: true });
-    },
-    [isAuthenticated, isLoading, navigate],
-  );
+      } else {
+        setUser(data.session.user);
+        setChecking(false);
+      }
+    });
+  }, []);
 
-  //3. While loading, show spinner
-  if (isLoading)
+  if (checking) {
     return (
       <MainContainer>
-        <Loader size="large" text="Loading" />
+        <div className="flex h-screen items-center justify-center"><p className="text-gray-500">Loading...</p></div>
       </MainContainer>
     );
+  }
 
-  //4. if there is a user, render the app
-  if (isAuthenticated) return children;
+  return <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>;
+}
+
+// Simple context to share user across components
+import { createContext, useContext } from "react";
+const AuthContext = createContext(null);
+export function useUser() {
+  return useContext(AuthContext);
 }
 
 export default ProtectedRoute;

@@ -4,13 +4,13 @@ import AppLayout from "./components/AppLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Signin from "./features/authentication/Signin";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import ChatView from "./features/messageArea/ChatView";
+import Signup from "./features/authentication/Signup";
 import { UiProvider } from "./contexts/UiContext";
 import NewPasswordPage from "./features/authentication/NewPasswordPage";
 import ResetPasswordPage from "./features/authentication/ResetPasswordPage";
 import NotFound from "./components/NotFound";
 import { Toaster } from "react-hot-toast";
+import ChatView from "./features/messageArea/ChatView";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +27,7 @@ function App() {
               <Route path=":roomId" element={<ChatView />} />
             </Route>
             <Route path="signin" element={<Signin />} />
+            <Route path="signup" element={<Signup />} />
             <Route path="new-password" element={<NewPasswordPage />} />
             <Route path="reset-password" element={<ResetPasswordPage />} />
             <Route path="*" element={<NotFound />} />
